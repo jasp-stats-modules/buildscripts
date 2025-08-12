@@ -165,7 +165,7 @@ options(jaspRemoteCellarRedownload=FALSE)
 
 modules <- commandArgs(trailingOnly=TRUE)
 currentJASPVersion <- readLines(url("https://raw.githubusercontent.com/jasp-stats/jasp-desktop/refs/heads/development/version.txt"))[[1]]
-release_description <- paste0("---\n","jasp: >=", "0.95.1", "\n---\n") #temp
+release_description <- paste0("---\n","jasp: '>=", "0.95.1'", "\n---\n") #temp
 
 print(modules)
 f <- function(mod) {
