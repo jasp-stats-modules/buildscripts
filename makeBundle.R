@@ -10,11 +10,9 @@ dir.create(toolLibpath, recursive=TRUE)
 on.exit(unlink(workdir, recursive=TRUE))
 .libPaths(toolLibpath)
 
-if (!require("remotes", quietly=TRUE)) {
-  install.packages("remotes")
-  install.packages("optparse")
-  install.packages("httr2")
-}
+install.packages("remotes")
+install.packages("optparse")
+install.packages("httr2")
 remotes::install_github("jasp-stats/jaspModuleTools")
 library(jaspModuleTools)
 
