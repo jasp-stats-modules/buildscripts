@@ -108,7 +108,7 @@ get_release <- function(owner, repo, tag_name, token, release_description = "") 
 
 upload_asset <- function(owner, repo, tag_name, asset_path, asset_name = "", token = "", release_description="", overwrite = TRUE) {
   if(asset_name == "") asset_name <- basename(asset_path)
-  if(token == "") token = Sys.getenv("GITHUB_PAT")
+  if(token == "") token = Sys.getenv("BUNDLE_PAT")
   
   release <- get_release(owner, repo, tag_name, token, release_description=release_description) |> httr2::resp_body_json()
   present_names <- sapply(release$assets, function(x) {x$name})
