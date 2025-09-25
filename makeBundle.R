@@ -7,7 +7,6 @@ if(dir.exists(workdir))
 
 toolLibpath <- file.path(workdir, 'toolLibpath')
 dir.create(toolLibpath, recursive=TRUE)
-on.exit(unlink(workdir, recursive=TRUE))
 .libPaths(toolLibpath)
 
 install.packages("remotes")
