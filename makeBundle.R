@@ -40,9 +40,10 @@ getAssetName <- function(path, add_post = c()) {
   name
 }
 
-getReleaseName <- function(commit, add_post = c()) {
+getReleaseName <- function(path, commit, add_post = c()) {
+  pkgVersion <- read.dcf(fs::path(fs::path_dir(fs::path_dir(path)), 'Description'))[4]
   RVersion <- paste0('R-', paste(R.Version()$major, gsub('\\.', '-', R.Version()$minor), sep = '-'))
-  name <- paste(substr(commit, 1, 8), RVersion, sep='_') 
+  name <- paste(pkgVersion, substr(commit, 1, 8), RVersion, sep='_') 
   if(length(add_post)) name <- paste(name, paste(add_post, collapse ='_'), sep = '_')
   name
 }
@@ -148,7 +149,7 @@ uploadSubmoduleScript <- function(dir, overwrite = FALSE, clean = TRUE, release_
     repo <- gsub('\\.git', '', basename(url))
     owner <- basename(dirname(url))
     setwd(oldwd)
-    if(upload_asset(owner, repo, getReleaseName(commit), bundle, asset_name = getAssetName(bundle), overwrite = overwrite, release_description=release_description))
+    if(upload_asset(owner, repo, getReleaseName(bundle, commit), bundle, asset_name = getAssetName(bundle), overwrite = overwrite, release_description=release_description))
       if(clean) unlink(build, recursive = TRUE)
   }
   else
