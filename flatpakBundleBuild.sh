@@ -6,12 +6,8 @@ export PKG_CONFIG_PATH=/app/lib/pkgconfig/
 export DOWNLOAD_STATIC_LIBV8=1
 export R_LIBS=$XDG_CACHE_HOME/../jasp_R_dev_lib/
 unset R_LIBS_USER
+rmdir $R_LIBS
 mkdir $R_LIBS
 
 
-git submodule update --init
-wget https://raw.githubusercontent.com/jasp-stats-modules/buildscripts/refs/heads/main/makeBundle.R'
-chmod +x makeBundle.R
-git submodule foreach --quiet "pwd" > to_build
-cat to_build
 cat to_build | xargs /app/bin/Rscript makeBundle.R
