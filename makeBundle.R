@@ -32,7 +32,7 @@ getOS <- function() {
 }
 
 getAssetName <- function(path, add_post = c()) {
-  pkgVersion <- read.dcf(fs::path(fs::path_dir(fs::path_dir(path)), 'Description'))[4]
+  pkgVersion <- read.dcf(fs::path(fs::path_dir(fs::path_dir(path)), 'DESCRIPTION'))[4]
   RVersion <- paste0('R-', paste(R.Version()$major, gsub('\\.', '-', R.Version()$minor), sep = '-'))
   name <- paste(fs::path_ext_remove(fs::path_file(path)), pkgVersion, getOS(), Sys.info()['machine'], RVersion, sep = '_')
   if(length(add_post)) name <- paste(name, paste(add_post, collapse ='_'), sep = '_')
@@ -41,7 +41,7 @@ getAssetName <- function(path, add_post = c()) {
 }
 
 getReleaseName <- function(path, commit, add_post = c()) {
-  pkgVersion <- read.dcf(fs::path(fs::path_dir(fs::path_dir(path)), 'Description'))[4]
+  pkgVersion <- read.dcf(fs::path(fs::path_dir(fs::path_dir(path)), 'DESCRIPTION'))[4]
   RVersion <- paste0('R-', paste(R.Version()$major, gsub('\\.', '-', R.Version()$minor), sep = '-'))
   name <- paste(pkgVersion, substr(commit, 1, 8), RVersion, sep='_') 
   if(length(add_post)) name <- paste(name, paste(add_post, collapse ='_'), sep = '_')
