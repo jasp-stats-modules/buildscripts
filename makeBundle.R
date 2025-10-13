@@ -170,7 +170,7 @@ f <- function(mod) {
   tryCatch({
     bundlesDir <- file.path(mod, 'build')
     dir.create(bundlesDir, recursive=TRUE)
-    jaspModuleTools::compile(mod, workdir=workdir, resultdir=bundlesDir, bundleAll=TRUE, buildforJaspVersion=currentJASPVersion)
+    jaspModuleTools::compile(mod, workdir=workdir, resultdir=bundlesDir, bundleAll=FALSE, buildforJaspVersion=currentJASPVersion)
     uploadSubmoduleScript(mod, overwrite=TRUE, clean=TRUE, release_description)
   }, error = function(e) { cat("Could not build:", conditionMessage(e), "\n") })
 }
