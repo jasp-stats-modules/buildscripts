@@ -58,7 +58,7 @@ create_release <- function(owner, repo, tag_name, token, release_description="")
     httr2::req_error(is_error = function(x) {FALSE}) |>
     httr2::req_headers(Accept = 'application/vnd.github+json') |>
     httr2::req_auth_bearer_token(token) |>
-    httr2::req_body_json(list(tag_name = tag_name, name = tag_name, body = release_description, prerelease = TRUE))
+    httr2::req_body_json(list(tag_name = tag_name, name = tag_name, body = release_description, prerelease = FALSE))
   
   print(req)  
   resp <- req |> httr2::req_perform()
