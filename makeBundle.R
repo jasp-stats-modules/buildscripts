@@ -149,7 +149,7 @@ uploadSubmoduleScript <- function(dir, overwrite = FALSE, clean = TRUE, release_
     repo <- gsub('\\.git', '', basename(url))
     owner <- basename(dirname(url))
     setwd(oldwd)
-    if(upload_asset(owner, repo, getReleaseName(bundle, commit), bundle, asset_name = getAssetName(bundle), overwrite = overwrite, release_description=release_description))
+    if(upload_asset(owner, repo, getReleaseName(bundle, commit, if (nzchar(Sys.getenv("BETA_BUILD"))) c("Beta") else c("Release")), bundle, asset_name = getAssetName(bundle), overwrite = overwrite, release_description=release_description))
       if(clean) unlink(build, recursive = TRUE)
   }
   else
