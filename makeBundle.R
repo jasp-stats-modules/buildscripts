@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 options(repos='https://cran.r-project.org')
+print("test")
 if (nzchar(Sys.getenv("BETA_BUILD"))) print("BETA_BUILD")
 
 workdir <- file.path('build')
