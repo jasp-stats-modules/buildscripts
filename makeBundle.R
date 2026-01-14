@@ -211,6 +211,7 @@ uploadSubmoduleScript <- function(dir, overwrite = FALSE, clean = TRUE, release_
     owner <- basename(dirname(url))
     setwd(oldwd)
 
+    token = Sys.getenv("BUNDLE_PAT")
     newVersionNum = get_new_release_version(fs::path_dir(fs::path_dir(path)), owner, repo, token)
     if(upload_asset(owner, repo, getReleaseName(bundle, commit, newVersionNum, if (nzchar(Sys.getenv("BETA_BUILD"))) c("Beta") else c("Release")), bundle, asset_name = getAssetName(bundle, newVersionNum), overwrite = overwrite, release_description=release_description))
       if(clean) unlink(build, recursive = TRUE)
