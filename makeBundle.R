@@ -224,7 +224,7 @@ print(modules)
 f <- function(mod) {
   tryCatch({
     #gather data
-    oldwd <- getwd(); setwd(dir)
+    oldwd <- getwd(); setwd(mod)
     commit <- system('git rev-parse HEAD', intern = TRUE)
     url <- system('git remote get-url --push origin', intern = TRUE)
     repo <- gsub('\\.git', '', basename(url))
