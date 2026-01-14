@@ -28,7 +28,6 @@ library("stringr")
 library("readr")
 
 
-
 getOS <- function() {
   os <- Sys.info()[['sysname']]
   if(os == 'Darwin')
@@ -39,7 +38,7 @@ getOS <- function() {
 }
 
 getAssetName <- function(path, add_post = c()) {
-  pkgVersion <- read.dcf(fs::path(fs::path_dir(fs::path_dir(path)), 'DESCRIPTION'))[4]
+  pkgVersion <- get_new_release_version(fs::path_dir(fs::path_dir(path)))
   RVersion <- paste0('R-', paste(R.Version()$major, gsub('\\.', '-', R.Version()$minor), sep = '-'))
   name <- paste(fs::path_ext_remove(fs::path_file(path)), pkgVersion, getOS(), Sys.info()['machine'], RVersion, sep = '_')
   if(length(add_post)) name <- paste(name, paste(add_post, collapse ='_'), sep = '_')
@@ -48,7 +47,7 @@ getAssetName <- function(path, add_post = c()) {
 }
 
 getReleaseName <- function(path, commit, add_post = c()) {
-  pkgVersion <- read.dcf(fs::path(fs::path_dir(fs::path_dir(path)), 'DESCRIPTION'))[4]
+  pkgVersion <- get_new_release_version(fs::path_dir(fs::path_dir(path)))
   RVersion <- paste0('R-', paste(R.Version()$major, gsub('\\.', '-', R.Version()$minor), sep = '-'))
   name <- paste(pkgVersion, substr(commit, 1, 8), RVersion, sep='_')
   if(length(add_post)) name <- paste(name, paste(add_post, collapse ='_'), sep = '_')
@@ -71,6 +70,45 @@ getQmlDescription <- function(path) {
   qml_text <- read_file(file.path(path, "inst", "description.qml"))
   match <- str_match(qml_text, 'description\\s*:\\s*qsTr\\("(.*?)"\\)')
   description <- match[2]
+}
+
+get_new_release_version <- function(pkg_path, owner, repo, token) {
+  url <- sprintf('https://api.github.com/repos/%s/%s/releases/latest', owner, repo)
+
+  req <- httr2::request(url)
+  req <- req |>
+    httr2::req_method('GET') |>
+    httr2::req_error(is_error = function(x) {FALSE}) |>
+    httr2::req_headers(Accept = 'application/vnd.github+json') |>
+    httr2::req_auth_bearer_token(token)
+
+  resp <- req |> httr2::req_perform()
+
+  if(httr2::resp_status(resp) == 200) {
+    release_data <- resp |> httr2::resp_body_json()
+    version <- as.package_version(sub("_.*", "", release_data$name))
+  }
+  else if(httr2::resp_status(resp) == 404) {
+    # no releases exist
+    version <- as.package_version("0.0.0")
+  }
+  else {
+    stop(sprintf("Failed to query release! Status: %s", httr2::resp_status(resp)))
+  }
+
+  pkg_version_str <- read.dcf(fs::path(pkg_path, 'DESCRIPTION'))[1, "Version"]
+  pkg_version <- as.package_version(pkg_version_str)
+  if (!nzchar(Sys.getenv("BETA_BUILD"))) { #release
+    pkg_version_str
+  }
+  else { # beta
+    if(lengths(unclass(pkg_version)) < lengths(unclass(version))) { #hidden version postfix exist so we need to add 1
+      paste0(pkg_version_str, '-', as.character(tail(unclass(version)[[1]], 1) + 1))
+    }
+    else { # no postfix is present yet so the number 1 seems fine as a start
+      paste0(pkg_version_str, '-', as.character(1))
+    }
+  }
 }
 
 create_release <- function(owner, repo, tag_name, token, release_description="") {
@@ -201,3 +239,4 @@ f <- function(mod) {
 }
 sapply(modules, f)
 warnings()
+
