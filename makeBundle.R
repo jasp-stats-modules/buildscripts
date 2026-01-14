@@ -101,10 +101,10 @@ get_new_release_version <- function(pkg_path, owner, repo, token) {
   }
   else { # beta
     if(lengths(unclass(pkg_version)) < lengths(unclass(version))) { #hidden version postfix exist so we need to add 1
-      paste0(pkg_version_str, '-', as.character(tail(unclass(version)[[1]], 1) + 1))
+      paste0(pkg_version_str, '.', as.character(tail(unclass(version)[[1]], 1) + 1))
     }
     else { # no postfix is present yet so the number 1 seems fine as a start
-      paste0(pkg_version_str, '-', as.character(1))
+      paste0(pkg_version_str, '.', as.character(1))
     }
   }
 }
