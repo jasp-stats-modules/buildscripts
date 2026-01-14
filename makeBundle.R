@@ -37,8 +37,7 @@ getOS <- function() {
   return(os)
 }
 
-getAssetName <- function(path, add_post = c()) {
-  pkgVersion <- get_new_release_version(fs::path_dir(fs::path_dir(path)))
+getAssetName <- function(path, pkgVersion, add_post = c()) {
   RVersion <- paste0('R-', paste(R.Version()$major, gsub('\\.', '-', R.Version()$minor), sep = '-'))
   name <- paste(fs::path_ext_remove(fs::path_file(path)), pkgVersion, getOS(), Sys.info()['machine'], RVersion, sep = '_')
   if(length(add_post)) name <- paste(name, paste(add_post, collapse ='_'), sep = '_')
@@ -46,8 +45,7 @@ getAssetName <- function(path, add_post = c()) {
   name
 }
 
-getReleaseName <- function(path, commit, add_post = c()) {
-  pkgVersion <- get_new_release_version(fs::path_dir(fs::path_dir(path)))
+getReleaseName <- function(path, commit, pkgVersion, add_post = c()) {
   RVersion <- paste0('R-', paste(R.Version()$major, gsub('\\.', '-', R.Version()$minor), sep = '-'))
   name <- paste(pkgVersion, substr(commit, 1, 8), RVersion, sep='_')
   if(length(add_post)) name <- paste(name, paste(add_post, collapse ='_'), sep = '_')
@@ -213,7 +211,8 @@ uploadSubmoduleScript <- function(dir, overwrite = FALSE, clean = TRUE, release_
     owner <- basename(dirname(url))
     setwd(oldwd)
 
-    if(upload_asset(owner, repo, getReleaseName(bundle, commit, if (nzchar(Sys.getenv("BETA_BUILD"))) c("Beta") else c("Release")), bundle, asset_name = getAssetName(bundle), overwrite = overwrite, release_description=release_description))
+    newVersionNum = get_new_release_version(fs::path_dir(fs::path_dir(path)), owner, repo, token)
+    if(upload_asset(owner, repo, getReleaseName(bundle, commit, newVersionNum, if (nzchar(Sys.getenv("BETA_BUILD"))) c("Beta") else c("Release")), bundle, asset_name = getAssetName(bundle, newVersionNum), overwrite = overwrite, release_description=release_description))
       if(clean) unlink(build, recursive = TRUE)
   }
   else
