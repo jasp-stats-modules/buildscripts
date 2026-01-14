@@ -200,19 +200,10 @@ upload_asset <- function(owner, repo, tag_name, asset_path, asset_name = "", tok
 
 
 
-uploadSubmoduleScript <- function(dir, overwrite = FALSE, clean = TRUE, release_description = "") {
+uploadSubmoduleScript <- function(dir, owner, repo, commit, newVersionNum, overwrite = FALSE, clean = TRUE, release_description = "") {
   build <- path(dir, 'build')
   if(dir.exists(build)) {
     bundle <- fs::dir_ls(build, regexp = '*.JASPModule')[[1]]
-    oldwd <- getwd(); setwd(dir)
-    commit <- system('git rev-parse HEAD', intern = TRUE)
-    url <- system('git remote get-url --push origin', intern = TRUE)
-    repo <- gsub('\\.git', '', basename(url))
-    owner <- basename(dirname(url))
-    setwd(oldwd)
-
-    token = Sys.getenv("BUNDLE_PAT")
-    newVersionNum = get_new_release_version(fs::path_dir(fs::path_dir(path)), owner, repo, token)
     if(upload_asset(owner, repo, getReleaseName(bundle, commit, newVersionNum, if (nzchar(Sys.getenv("BETA_BUILD"))) c("Beta") else c("Release")), bundle, asset_name = getAssetName(bundle, newVersionNum), overwrite = overwrite, release_description=release_description))
       if(clean) unlink(build, recursive = TRUE)
   }
@@ -227,14 +218,24 @@ options(jaspRemoteCellarRedownload=FALSE)
 
 modules <- commandArgs(trailingOnly=TRUE)
 currentJASPVersion <- readLines(url("https://raw.githubusercontent.com/jasp-stats/jasp-desktop/refs/heads/development/version.txt"))[[1]]
-
+token = Sys.getenv("BUNDLE_PAT")
+                                                
 print(modules)
 f <- function(mod) {
   tryCatch({
+    #gather data
+    oldwd <- getwd(); setwd(dir)
+    commit <- system('git rev-parse HEAD', intern = TRUE)
+    url <- system('git remote get-url --push origin', intern = TRUE)
+    repo <- gsub('\\.git', '', basename(url))
+    owner <- basename(dirname(url))
+    setwd(oldwd)
+    newVersionNum = get_new_release_version(mod, owner, repo, token)
+      
     bundlesDir <- file.path(mod, 'build')
     dir.create(bundlesDir, recursive=TRUE)
-    jaspModuleTools::compile(mod, workdir=workdir, resultdir=bundlesDir, bundleAll=TRUE, buildforJaspVersion=currentJASPVersion)
-    uploadSubmoduleScript(mod, overwrite=TRUE, clean=TRUE, getReleaseDescription(mod))
+    jaspModuleTools::compile(mod, workdir=workdir, resultdir=bundlesDir, bundleAll=TRUE, buildforJaspVersion=currentJASPVersion, includeInManifest = list(version=newVersionNum))
+    uploadSubmoduleScript(mod, owner, repo, commit, newVersionNum, overwrite=TRUE, clean=TRUE, getReleaseDescription(mod))
   }, error = function(e) { cat("Could not build:", conditionMessage(e), "\n") })
 }
 sapply(modules, f)
