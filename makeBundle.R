@@ -59,13 +59,13 @@ getReleaseDescription <- function(path) {
 }
 
 getQmlPkgName <- function(path) {
-  qml_text <- read_file(file.path(path, "inst", "description.qml"))
+  qml_text <- read_file(file.path(path, "inst", "Description.qml"))
   match <- str_match(qml_text, 'title\\s*:\\s*qsTr\\("(.*?)"\\)')
   title <- match[2]
 }
 
 getQmlDescription <- function(path) {
-  qml_text <- read_file(file.path(path, "inst", "description.qml"))
+  qml_text <- read_file(file.path(path, "inst", "Description.qml"))
   match <- str_match(qml_text, 'description\\s*:\\s*qsTr\\("(.*?)"\\)')
   description <- match[2]
 }
