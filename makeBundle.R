@@ -71,7 +71,7 @@ getQmlDescription <- function(path) {
 }
 
 get_new_release_version <- function(pkg_path, owner, repo, token) {
-  url <- sprintf('https://api.github.com/repos/%s/%s/releases/latest', owner, repo)
+  url <- sprintf('https://api.github.com/repos/%s/%s/releases?per_page=100', owner, repo)
 
   req <- httr2::request(url)
   req <- req |>
@@ -83,11 +83,20 @@ get_new_release_version <- function(pkg_path, owner, repo, token) {
   resp <- req |> httr2::req_perform()
 
   if(httr2::resp_status(resp) == 200) {
-    release_data <- resp |> httr2::resp_body_json()
-    version <- as.package_version(sub("_.*", "", release_data$name))
+    releases_data <- resp |> httr2::resp_body_json()
+    
+    if (length(releases_data) == 0) {
+      version <- as.package_version("0.0.0")
+    } else {
+      release_dates <- vapply(releases_data, function(x) {
+        if (is.null(x$published_at)) "" else x$published_at
+      }, character(1))
+      sorted_indices <- order(release_dates, decreasing = TRUE)
+      latest_release <- releases_data[[sorted_indices[1]]]
+      version <- as.package_version(sub("_.*", "", latest_release$name))
+    }
   }
   else if(httr2::resp_status(resp) == 404) {
-    # no releases exist
     version <- as.package_version("0.0.0")
   }
   else {
@@ -96,11 +105,12 @@ get_new_release_version <- function(pkg_path, owner, repo, token) {
 
   pkg_version_str <- read.dcf(fs::path(pkg_path, 'DESCRIPTION'))[1, "Version"]
   pkg_version <- as.package_version(pkg_version_str)
-  if (!nzchar(Sys.getenv("BETA_BUILD"))) { #release
+  
+  if (!nzchar(Sys.getenv("BETA_BUILD"))) { # release
     pkg_version_str
   }
   else { # beta
-    if(lengths(unclass(pkg_version)) < lengths(unclass(version))) { #hidden version postfix exist so we need to add 1
+    if(lengths(unclass(pkg_version)) < lengths(unclass(version))) { # hidden version postfix exist so we need to add 1
       paste0(pkg_version_str, '.', as.character(tail(unclass(version)[[1]], 1) + 1))
     }
     else { # no postfix is present yet so the number 1 seems fine as a start
