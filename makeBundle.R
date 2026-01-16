@@ -37,7 +37,7 @@ getOS <- function() {
   return(os)
 }
 
-getPlatform < function() {
+getPlatform <- function() {
     paste(getOS(), Sys.info()['machine'], sep = '_')
 }
 
