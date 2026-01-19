@@ -59,7 +59,7 @@ getReleaseName <- function(path, commit, pkgVersion, add_post = c()) {
 getReleaseDescription <- function(path) {
   name <- getQmlPkgName(path)
   desc <- getQmlDescription(path)
-  release_description <- paste0("---\n","jasp: \'>=", "0.95.1\'", "\n---\n", "---\n name: \'", name, "\'\n---\n", "---\ndescription: \'", desc, "\'\n---\n")
+  release_description <- paste0("---\njasp: \'>=", "0.95.1\'", "\nname: \'", name, "\'\ndescription: \'", desc, "\'\n---\n")
 }
 
 getQmlPkgName <- function(path) {
