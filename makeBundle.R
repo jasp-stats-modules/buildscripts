@@ -79,7 +79,7 @@ get_new_release_version <- function(pkg_path, owner, repo, token) {
   pkg_version <- as.package_version(pkg_version_str)
 
   if (!nzchar(Sys.getenv("BETA_BUILD"))) { # release
-    return(pkg_version_str)
+    return(unname(pkg_version_str))
   }
     
   versions_match_base <- function(base, target) { #func to compare if target version starts with base version
