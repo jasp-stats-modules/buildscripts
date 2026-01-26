@@ -268,7 +268,7 @@ f <- function(mod) {
       
     bundlesDir <- file.path(mod, 'build')
     dir.create(bundlesDir, recursive=TRUE)
-    jaspModuleTools::compile(mod, workdir=workdir, resultdir=bundlesDir, bundleAll=TRUE, buildforJaspVersion=currentJASPVersion, includeInManifest = list(version=newVersionNum))
+    jaspModuleTools::compile(mod, workdir=workdir, resultdir=bundlesDir, bundleAll=TRUE, buildforJaspVersion=currentJASPVersion, includeInManifest = list(version=newVersionNum), deleteLibrary = TRUE)
     uploadSubmoduleScript(mod, owner, repo, commit, newVersionNum, overwrite=TRUE, clean=TRUE, getReleaseDescription(mod))
   }, error = function(e) { cat("Could not build:", conditionMessage(e), "\n") })
 }
