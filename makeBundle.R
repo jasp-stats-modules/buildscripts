@@ -75,20 +75,17 @@ getQmlDescription <- function(path) {
 }
 
 get_new_release_version <- function(pkg_path, owner, repo, token) {
-  pkg_version_str <- read.dcf(fs::path(pkg_path, 'DESCRIPTION'))[1, "Version"]
-  pkg_version <- as.package_version(pkg_version_str)
+  pkg_version_str <- unname(read.dcf(fs::path(pkg_path, 'DESCRIPTION'))[1, "Version"])
+  current_version_str <- pkg_version_str
 
-  if (!nzchar(Sys.getenv("BETA_BUILD"))) { # release
-    return(unname(pkg_version_str))
+  versions_match_base_and_type <- function(base, target) {
+    base_match <- sub("[-+].*$", "", base) == sub("[-+].*$", "", target)
+    is_beta <- grepl("beta", target)
+    type_match <- if(nzchar(Sys.getenv("BETA_BUILD"))) is_beta else !is_beta
+    base_match & type_match
   }
-    
-  versions_match_base <- function(base, target) { #func to compare if target version starts with base version
-    v_base <- unclass(base)[[1]]
-    v_target <- unclass(target)[[1]]
-    if (length(v_target) < length(v_base)) return(FALSE)
-    return(all(v_base == v_target[1:length(v_base)]))
-  }
-    
+
+  ##pull last 100 releases and see if there is a release for our pkg_version already so we may determine buildnum
   url <- sprintf('https://api.github.com/repos/%s/%s/releases?per_page=100', owner, repo)
   req <- httr2::request(url)
   req <- req |>
@@ -101,48 +98,40 @@ get_new_release_version <- function(pkg_path, owner, repo, token) {
 
   if(httr2::resp_status(resp) == 200) {
     releases_data <- resp |> httr2::resp_body_json()
-    
-    if (length(releases_data) == 0) {
-      version <- as.package_version("0.0.0")
-    } 
-    else {
-      version <- as.package_version("0.0.0")
+    if (length(releases_data) != 0) {
       release_dates <- vapply(releases_data, function(x) {
         if (is.null(x$published_at)) "" else x$published_at
       }, character(1))
       sorted_indices <- order(release_dates, decreasing = TRUE)
       for (i in sorted_indices) {
         rel <- releases_data[[i]]
-        rel_version <- as.package_version(sub("_.*", "", rel$name))
-        print(rel_version)
-        if(versions_match_base(pkg_version, rel_version)) {
+        release_version_str <- sub("_.*", "", rel$name)
+        if(versions_match_base_and_type(pkg_version_str, release_version_str)) {
           asset_names <- if (length(rel$assets) > 0) {
             vapply(rel$assets, function(a) a$name, character(1))
           } else { character(0) }
           has_os_asset <- any(grepl(getPlatform(), asset_names, fixed = TRUE))
           if (has_os_asset) {
-            version <- rel_version
+            current_version_str <- release_version_str
             break
           }
         }
       }
     }
   }
-  else if(httr2::resp_status(resp) == 404) {
-    version <- as.package_version("0.0.0")
-  }
-  else {
+  else if(httr2::resp_status(resp) != 404) {
     stop(sprintf("Failed to query release! Status: %s", httr2::resp_status(resp)))
   }
-  
-  if(lengths(unclass(pkg_version)) < lengths(unclass(version))) { # hidden version postfix exist, new one is needed, so we need to add 1
-    paste0(pkg_version_str, '.', as.character(tail(unclass(version)[[1]], 1) + 1))
-  }
-  else { # no postfix is present yet so the number 1 seems fine as a start
-    paste0(pkg_version_str, '.', as.character(1))
-  }
-}
 
+  #generate new version (+1)
+  current_version <- parse_version(current_version_str)
+  if(render_version(current_version)[[1]]$prerelease == "")
+    new_version <- paste0(current_version_str, if(!nzchar(Sys.getenv("BETA_BUILD"))) "-release.0" else "-beta.0")
+  else
+    new_version <- str_replace(current_version_str, "(\\d+)$", function(x) as.numeric(x) + 1)
+  new_version
+}
+                               
 create_release <- function(owner, repo, tag_name, token, release_description="") {
   print(owner)
   print(repo)
