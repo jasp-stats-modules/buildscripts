@@ -15,6 +15,7 @@ install.packages("optparse")
 install.packages("httr2")
 install.packages("stringr")
 install.packages("readr")
+install.packages("semver")
 remotes::install_github("jasp-stats/jaspModuleTools")
 library(jaspModuleTools)
 
@@ -26,6 +27,8 @@ library("fs")
 library("httr2")
 library("stringr")
 library("readr")
+library("semver")
+
 
 
 getOS <- function() {
