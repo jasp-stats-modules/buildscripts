@@ -128,10 +128,7 @@ get_new_release_version <- function(pkg_path, owner, repo, token) {
 
   #generate new version (+1)
   current_version <- parse_version(current_version_str)
-  if(nzchar(Sys.getenv("BUILDNUM"))) {
-    buildnum <- as.integer(Sys.getenv("BUILDNUM"))
-    new_version <- str_replace(current_version_str, "(\\d+)$", buildnum)
-  }
+  if(nzchar(Sys.getenv("BUILDNUM"))) new_version <- str_replace(current_version_str, "(\\d+)$", Sys.getenv("BUILDNUM"))
   else if(render_version(current_version)[[1]]$prerelease == "")
     new_version <- paste0(current_version_str, if(!nzchar(Sys.getenv("BETA_BUILD"))) "-release.0" else "-beta.0")
   else
