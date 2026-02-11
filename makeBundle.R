@@ -54,7 +54,7 @@ getAssetName <- function(path, pkgVersion, add_post = c()) {
 
 getReleaseName <- function(path, commit, pkgVersion, add_post = c()) {
   RVersion <- paste0('R-', paste(R.Version()$major, gsub('\\.', '-', R.Version()$minor), sep = '-'))
-  name <- paste(pkgVersion, substr(commit, 1, 8), RVersion, sep='_')
+  name <- paste(pkgVersion, RVersion, sep='_')
   if(length(add_post)) name <- paste(name, paste(add_post, collapse ='_'), sep = '_')
   name
 }
