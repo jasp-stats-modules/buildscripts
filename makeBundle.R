@@ -249,7 +249,8 @@ options(jaspRemoteCellarRedownload=FALSE)
 modules <- commandArgs(trailingOnly=TRUE)
 currentJASPVersion <- readLines(url("https://raw.githubusercontent.com/jasp-stats/jasp-desktop/refs/heads/development/version.txt"))[[1]]
 token = Sys.getenv("BUNDLE_PAT")
-                                                
+
+print(Sys.getenv("BUILDNUM"))                                                
 print(modules)
 f <- function(mod) {
   tryCatch({
