@@ -16,7 +16,8 @@ install.packages("httr2")
 install.packages("stringr")
 install.packages("readr")
 install.packages("semver")
-remotes::install_github("jasp-stats/jaspModuleTools")
+remotes::install_version("renv", version = "1.1.8")
+remotes::install_github("jasp-stats/jaspModuleTools", upgrade = "never")
 library(jaspModuleTools)
 
 
