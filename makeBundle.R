@@ -12,6 +12,7 @@ dir.create(toolLibpath, recursive=TRUE)
 
 install.packages("remotes")
 install.packages("optparse")
+install.packages("getopt")
 install.packages("httr2")
 install.packages("stringr")
 install.packages("readr")
