@@ -3,6 +3,31 @@ options(repos='https://cran.r-project.org')
 options(renv.config.install.jobs = 1)
 options(renv.config.install.verbose = TRUE)
 options(renv.verbose = TRUE)
+
+options(error = function() {
+  cat("\n=== FATAL ERROR DETECTED: SEARCHING FOR RENV LOGS ===\n")
+  
+  # Search the current directory (which includes your 'build' workdir) and system temp
+  log_files <- c(
+    list.files(path = ".", pattern = "\\.log$", recursive = TRUE, full.names = TRUE),
+    list.files(tempdir(), pattern = "\\.log$", recursive = TRUE, full.names = TRUE)
+  )
+  
+  if (length(log_files) > 0) {
+    for (log_file in unique(log_files)) {
+      cat(sprintf("\n--- CONTENTS OF %s ---\n", log_file))
+      try({ cat(readLines(log_file, warn = FALSE), sep = "\n") }, silent = TRUE)
+      cat("\n-----------------------------------\n")
+    }
+  } else {
+    cat("No .log files found anywhere.\n")
+  }
+  
+  cat("\n=== ORIGINAL ERROR TRACEBACK ===\n")
+  traceback()
+  quit(save = "no", status = 1)
+})
+
 if (nzchar(Sys.getenv("BETA_BUILD"))) print("BETA_BUILD")
 
 workdir <- file.path('build')
@@ -279,22 +304,6 @@ f <- function(mod) {
       cat("Could not build:", conditionMessage(e), "\n")
                                          
   })
-
-    cat("\n=== SEARCHING FOR COMPILER LOGS ===\n")
-    log_files <- c(
-      list.files(workdir, pattern = "\\.log$", recursive = TRUE, full.names = TRUE),
-      list.files(tempdir(), pattern = "\\.log$", recursive = TRUE, full.names = TRUE)
-    )
-    
-    if (length(log_files) > 0) {
-      for (log_file in unique(log_files)) {
-        cat(sprintf("\n--- CONTENTS OF %s ---\n", log_file))
-        cat(readLines(log_file, warn=FALSE), sep = "\n")
-        cat("\n-----------------------------------\n")
-      }
-    } else {
-      cat("No .log files found in workdir or tempdir.\n")
-    }
 }
 sapply(modules, f)
 warnings()
