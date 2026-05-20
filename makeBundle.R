@@ -274,7 +274,28 @@ f <- function(mod) {
     dir.create(bundlesDir, recursive=TRUE)
     jaspModuleTools::compile(mod, workdir=workdir, resultdir=bundlesDir, bundleAll=TRUE, buildforJaspVersion=currentJASPVersion, includeInManifest = list(version=newVersionNum), deleteLibrary = TRUE)
     uploadSubmoduleScript(mod, owner, repo, commit, newVersionNum, overwrite=TRUE, clean=TRUE, getReleaseDescription(mod))
-  }, error = function(e) { cat("Could not build:", conditionMessage(e), "\n") })
+  }, error = function(e) { 
+      
+      cat("Could not build:", conditionMessage(e), "\n")
+                         
+    cat("\n=== SEARCHING FOR COMPILER LOGS ===\n")
+    log_files <- c(
+      list.files(workdir, pattern = "\\.log$", recursive = TRUE, full.names = TRUE),
+      list.files(tempdir(), pattern = "\\.log$", recursive = TRUE, full.names = TRUE)
+    )
+    
+    if (length(log_files) > 0) {
+      for (log_file in unique(log_files)) {
+        cat(sprintf("\n--- CONTENTS OF %s ---\n", log_file))
+        cat(readLines(log_file, warn=FALSE), sep = "\n")
+        cat("\n-----------------------------------\n")
+      }
+    } else {
+      cat("No .log files found in workdir or tempdir.\n")
+    }
+                         
+                         
+  })
 }
 sapply(modules, f)
 warnings()
