@@ -277,7 +277,9 @@ f <- function(mod) {
   }, error = function(e) { 
       
       cat("Could not build:", conditionMessage(e), "\n")
-                         
+                                         
+  })
+
     cat("\n=== SEARCHING FOR COMPILER LOGS ===\n")
     log_files <- c(
       list.files(workdir, pattern = "\\.log$", recursive = TRUE, full.names = TRUE),
@@ -293,9 +295,6 @@ f <- function(mod) {
     } else {
       cat("No .log files found in workdir or tempdir.\n")
     }
-                         
-                         
-  })
 }
 sapply(modules, f)
 warnings()
