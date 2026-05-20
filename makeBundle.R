@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 options(repos='https://cran.r-project.org')
 options(renv.config.install.jobs = 1)
+options(renv.config.install.verbose = TRUE)
+options(renv.verbose = TRUE)
 if (nzchar(Sys.getenv("BETA_BUILD"))) print("BETA_BUILD")
 
 workdir <- file.path('build')
