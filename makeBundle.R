@@ -4,29 +4,9 @@ options(renv.config.install.jobs = 1)
 options(renv.config.install.verbose = TRUE)
 options(renv.verbose = TRUE)
 
-options(error = function() {
-  cat("\n=== FATAL ERROR DETECTED: SEARCHING FOR RENV LOGS ===\n")
-  
-  # Search the current directory (which includes your 'build' workdir) and system temp
-  log_files <- c(
-    list.files(path = ".", pattern = "\\.log$", recursive = TRUE, full.names = TRUE),
-    list.files(tempdir(), pattern = "\\.log$", recursive = TRUE, full.names = TRUE)
-  )
-  
-  if (length(log_files) > 0) {
-    for (log_file in unique(log_files)) {
-      cat(sprintf("\n--- CONTENTS OF %s ---\n", log_file))
-      try({ cat(readLines(log_file, warn = FALSE), sep = "\n") }, silent = TRUE)
-      cat("\n-----------------------------------\n")
-    }
-  } else {
-    cat("No .log files found anywhere.\n")
-  }
-  
-  cat("\n=== ORIGINAL ERROR TRACEBACK ===\n")
-  traceback()
-  quit(save = "no", status = 1)
-})
+options(warn = 1)                                
+Sys.setenv(RENV_DOWNLOAD_TRACE = "TRUE")
+Sys.setenv(RENV_CONFIG_INSTALL_VERBOSE = "TRUE")
 
 if (nzchar(Sys.getenv("BETA_BUILD"))) print("BETA_BUILD")
 
