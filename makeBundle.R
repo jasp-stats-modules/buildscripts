@@ -2,7 +2,7 @@
 options(repos='https://cran.r-project.org')
 options(renv.config.install.jobs = 1)
 options(renv.config.install.verbose = TRUE)
-options(renv.config.pak.enabled = TRUE)
+#options(renv.config.pak.enabled = TRUE)
 options(renv.verbose = TRUE)
 
 options(warn = 1)                                
