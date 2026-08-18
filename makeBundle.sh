@@ -15,8 +15,24 @@ if [ -n "$4" ]; then
 		echo "ERROR: rig is not installed on this worker, cannot switch to R $4" >&2
 		exit 1
 	fi
-	if ! rig default "$4"; then
-		echo "ERROR: R $4 is not installed on this worker, install it once with 'rig add $4'" >&2
+	# `rig default` wants the installation name as shown by `rig list`. That
+	# name is the full version on Linux/Windows, but on macOS it is
+	# minor-version + architecture (e.g. 4.5-x86_64), so look up the name on
+	# the line that reports exactly our requested R version.
+	RIG_NAME=$(rig list | awk -v target="(R $4)" 'index($0, target) { for (i = 1; i <= NF; i++) if ($i != "*") { print $i; exit } }')
+	if [ -z "$RIG_NAME" ]; then
+		echo "ERROR: R $4 is not installed on this worker (no entry in 'rig list'), install it once with 'rig add $4'" >&2
+		exit 1
+	fi
+	echo "NOTE: switching to R $4, which rig knows as '$RIG_NAME'"
+	if ! rig default "$RIG_NAME"; then
+		echo "ERROR: 'rig default $RIG_NAME' failed" >&2
+		exit 1
+	fi
+	# Make sure the requested version is really the one selected now.
+	ACTUAL_R_VERSION=$(Rscript -e 'cat(paste(R.version$major, R.version$minor, sep="."))' 2>/dev/null)
+	if [ "$ACTUAL_R_VERSION" != "$4" ]; then
+		echo "ERROR: rig default resolved to R ${ACTUAL_R_VERSION:-<none>} but R $4 was requested; install R $4 on this worker with 'rig add $4'" >&2
 		exit 1
 	fi
 fi
