@@ -14,5 +14,6 @@ mkdir $R_LIBS
 [ "$BUILDNUM_PROTO" != "-1" ] && export BUILDNUM=$BUILDNUM_PROTO
 echo "$BETA_BUILD"
 echo "$BUILDNUM"
+echo "$COMPAT_VERSION"
 
 cat to_build | xargs /app/bin/Rscript makeBundle.R

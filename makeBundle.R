@@ -260,7 +260,19 @@ uploadSubmoduleScript <- function(dir, owner, repo, commit, newVersionNum, overw
 options(jaspRemoteCellarRedownload=FALSE)
 
 modules <- commandArgs(trailingOnly=TRUE)
-currentJASPVersion <- readLines(url("https://raw.githubusercontent.com/jasp-stats/jasp-desktop/refs/heads/development/version.txt"))[[1]]
+
+# JASP compatibility version the modules are built for (buildforJaspVersion).
+# Can be set through the COMPAT_VERSION env var (the "compatversion" buildbot
+# parameter); when empty this falls back to the current jasp-desktop
+# development version.
+compatVersion <- Sys.getenv("COMPAT_VERSION")
+if(nzchar(compatVersion)) {
+	currentJASPVersion <- compatVersion
+} else {
+	currentJASPVersion <- readLines(url("https://raw.githubusercontent.com/jasp-stats/jasp-desktop/refs/heads/development/version.txt"))[[1]]
+}
+print(paste0("Building modules for JASP version: ", currentJASPVersion))
+
 token = Sys.getenv("BUNDLE_PAT")
 
 print(Sys.getenv("BUILDNUM"))                                                
