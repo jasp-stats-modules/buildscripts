@@ -16,20 +16,29 @@ if [ -n "$4" ]; then
 		exit 1
 	fi
 	RIG_LIST_OUTPUT=$(rig list)
-	# `rig default` wants the installation name as shown by `rig list`. That
-	# name is the full version on Linux/Windows, but on macOS it is
-	# minor-version + architecture (e.g. 4.5-x86_64), so look up the name on
-	# the line that reports exactly our requested R version.
-	RIG_NAME=$(printf '%s\n' "$RIG_LIST_OUTPUT" | awk -v target="(R $4)" 'index($0, target) { for (i = 1; i <= NF; i++) if ($i != "*") { print $i; exit } }')
+	# `rig default` wants the installation name as shown by `rig list`, and
+	# that output comes in two flavours: on macOS the name is minor-version +
+	# architecture (e.g. 4.5-x86_64) while the exact R version is shown in
+	# the version column as "(R 4.5.2)"; on Windows the name column is the
+	# exact version itself and the version column stays empty. Handle both.
+	RIG_NAME=$(printf '%s\n' "$RIG_LIST_OUTPUT" | awk -v target="(R $4)" -v ver="$4" '
+		index($0, target) { for (i = 1; i <= NF; i++) if ($i != "*") { print $i; exit } }
+		{ name = ($1 == "*") ? $2 : $1; if (name == ver) { print name; exit } }')
 	if [ -z "$RIG_NAME" ]; then
 		echo "ERROR: R $4 is not installed on this worker (no entry in 'rig list'), install it once with 'rig add $4'" >&2
 		exit 1
 	fi
 	# Switching the default writes to system locations and therefore needs
-	# admin rights, which the buildbot worker usually does not have. So skip
-	# the switch when the requested version already is the default (rig list
-	# marks that line with '*').
-	CURRENT_R_VERSION=$(printf '%s\n' "$RIG_LIST_OUTPUT" | awk 'substr($0, 1, 1) == "*" { for (i = 1; i <= NF; i++) if ($i == "(R") { v = $(i+1); sub(/\)$/, "", v); print v; exit } }')
+	# admin rights, which the buildbot worker usually does not have (on
+	# Windows an elevation popup would block the build). So skip the switch
+	# when the requested version already is the default (rig list marks that
+	# line with '*').
+	CURRENT_R_VERSION=$(printf '%s\n' "$RIG_LIST_OUTPUT" | awk '
+		substr($0, 1, 1) == "*" {
+			for (i = 1; i <= NF; i++) if ($i == "(R") { v = $(i+1); sub(/\)$/, "", v); print v; exit }
+			name = ($1 == "*") ? $2 : $1
+			if (name ~ /^[0-9]/) { print name; exit }
+		}')
 	if [ "$CURRENT_R_VERSION" != "$4" ]; then
 		echo "NOTE: switching to R $4, which rig knows as '$RIG_NAME'"
 		SWITCHED=0
