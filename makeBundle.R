@@ -162,7 +162,7 @@ create_release <- function(owner, repo, tag_name, token, release_description="")
     httr2::req_error(is_error = function(x) {FALSE}) |>
     httr2::req_headers(Accept = 'application/vnd.github+json') |>
     httr2::req_auth_bearer_token(token) |>
-    httr2::req_body_json(list(tag_name = tag_name, name = tag_name, body = release_description, prerelease = nzchar(Sys.getenv("BETA_BUILD"))))
+    httr2::req_body_json(list(tag_name = tag_name, name = tag_name, body = release_description, prerelease = nzchar(Sys.getenv("BETA_BUILD")), draft = nzchar(Sys.getenv("DRAFT_BUILD"))))
 
   print(req)
   resp <- req |> httr2::req_perform()
@@ -185,6 +185,30 @@ update_release <- function(url, token, release_description) {
   resp <- req |> httr2::req_perform()
 }
 
+#draft releases cannot be fetched through /releases/tags/{tag} because the tag
+#does not exist until the draft is published, so scan the release list for a
+#draft with our intended tag_name instead (needed to re-upload/overwrite assets).
+find_draft_release <- function(owner, repo, tag_name, token) {
+  url <- sprintf('https://api.github.com/repos/%s/%s/releases?per_page=100', owner, repo)
+  req <- httr2::request(url)
+  req <- req |>
+    httr2::req_method('GET') |>
+    httr2::req_error(is_error = function(x) {FALSE}) |>
+    httr2::req_headers(Accept = 'application/vnd.github+json') |>
+    httr2::req_auth_bearer_token(token)
+
+  resp <- req |> httr2::req_perform()
+  if(httr2::resp_status(resp) != 200) {
+    resp |> httr2::resp_raw()
+    stop("failed to query release list while looking for drafts!")
+  }
+
+  for(rel in resp |> httr2::resp_body_json())
+    if(isTRUE(rel$draft) && !is.null(rel$tag_name) && rel$tag_name == tag_name)
+      return(rel)
+  NULL
+}
+
 get_release <- function(owner, repo, tag_name, token, release_description = "") {
   url <- sprintf('https://api.github.com/repos/%s/%s/releases/tags/%s', owner, repo, tag_name)
   req <- httr2::request(url)
@@ -199,8 +223,15 @@ get_release <- function(owner, repo, tag_name, token, release_description = "") 
     url <- (resp |> httr2::resp_body_json())$url
     update_release(url, token, release_description)
   }
-  else if(httr2::resp_status(resp) == 404)
-    create_release(owner, repo, tag_name, token, release_description = release_description)
+  else if(httr2::resp_status(resp) == 404) {
+    #either truly no release for this tag yet, or it exists as a draft (which is
+    #invisible to the by-tag endpoint) -- update that one instead of making a duplicate
+    draft <- find_draft_release(owner, repo, tag_name, token)
+    if(!is.null(draft))
+      update_release(draft$url, token, release_description)
+    else
+      create_release(owner, repo, tag_name, token, release_description = release_description)
+  }
   else {
     resp |> httr2::resp_raw()
     stop("failed to query release!")

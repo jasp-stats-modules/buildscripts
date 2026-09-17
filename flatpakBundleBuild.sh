@@ -10,10 +10,11 @@ unset R_LIBS_USER
 rmdir $R_LIBS
 mkdir $R_LIBS
 
-[ "$BRANCH_NAME" != "main" ] && export BETA_BUILD=TRUE
+[ "$BRANCH_NAME" != "main" ] && [ "$BRANCH_NAME" != "patch" ] && export BETA_BUILD=TRUE
 [ "$BUILDNUM_PROTO" != "-1" ] && export BUILDNUM=$BUILDNUM_PROTO
 echo "$BETA_BUILD"
 echo "$BUILDNUM"
 echo "$COMPAT_VERSION"
+echo "$DRAFT_BUILD"
 
 cat to_build | xargs /app/bin/Rscript makeBundle.R

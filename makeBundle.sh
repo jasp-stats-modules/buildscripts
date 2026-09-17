@@ -1,4 +1,4 @@
-[ "$1" != "main" ] && export BETA_BUILD=TRUE
+[ "$1" != "main" ] && [ "$1" != "patch" ] && export BETA_BUILD=TRUE
 [ "$2" != "-1" ] && export BUILDNUM=$2
 
 # $3 (optional): JASP compatibility version the modules are built for
@@ -63,9 +63,15 @@ if [ -n "$4" ]; then
 	fi
 fi
 
+# $5 (optional): any non-empty value uploads the release as a GitHub *draft*,
+# hiding it from the modules-app scraper (index.json) so no update marker is
+# shown to anyone. Bundle internals still say release/beta as usual.
+[ -n "$5" ] && export DRAFT_BUILD=TRUE
+
 echo "$2"
 echo "$BETA_BUILD"
 echo "$BUILDNUM"
 echo "$COMPAT_VERSION"
 echo "$4"
+echo "$DRAFT_BUILD"
 cat to_build | xargs ./makeBundle.R
