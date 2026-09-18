@@ -172,7 +172,15 @@ create_release <- function(owner, repo, tag_name, token, release_description="")
     resp |> httr2::resp_raw()
     stop("failed to create new release!")
   }
-  resp
+
+  #another worker may have created a draft with the same tag at the same time;
+  #make sure exactly one survives and continue with the survivor
+  winner <- reconcile_drafts(owner, repo, tag_name, token)
+  if(is.null(winner))
+    return(resp) #cannot even see our own draft yet -- assume we are alone
+  if(as.numeric(winner$id) == as.numeric(httr2::resp_body_json(resp)$id))
+    return(resp)
+  update_release(winner$url, token, release_description) #ours lost the race
 }
 
 update_release <- function(url, token, release_description) {
@@ -189,9 +197,9 @@ update_release <- function(url, token, release_description) {
 }
 
 #draft releases cannot be fetched through /releases/tags/{tag} because the tag
-#does not exist until the draft is published, so scan the release list for a
-#draft with our intended tag_name instead (needed to re-upload/overwrite assets).
-find_draft_release <- function(owner, repo, tag_name, token) {
+#does not exist until the draft is published, so scan the release list for
+#drafts with our intended tag_name instead (needed to re-upload/overwrite assets).
+find_draft_releases <- function(owner, repo, tag_name, token) {
   url <- sprintf('https://api.github.com/repos/%s/%s/releases?per_page=100', owner, repo)
   req <- httr2::request(url)
   req <- req |>
@@ -207,10 +215,38 @@ find_draft_release <- function(owner, repo, tag_name, token) {
     stop("failed to query release list while looking for drafts!")
   }
 
+  matches <- list()
   for(rel in resp |> httr2::resp_body_json())
     if(isTRUE(rel$draft) && !is.null(rel$tag_name) && rel$tag_name == tag_name)
-      return(rel)
-  NULL
+      matches <- c(matches, list(rel))
+  matches
+}
+
+#github does not enforce tag_name uniqueness for drafts, so concurrent workers
+#can each create a draft with the same tag. Reconcile deterministically: keep
+#the draft with the most assets (ties broken by lowest id, so every worker
+#picks the same winner) and delete the rest. Returns the survivor, or NULL
+#when no draft exists yet.
+reconcile_drafts <- function(owner, repo, tag_name, token) {
+  drafts <- find_draft_releases(owner, repo, tag_name, token)
+  if(length(drafts) == 0)
+    return(NULL)
+
+  ids     <- vapply(drafts, function(d) as.numeric(d$id), numeric(1))
+  nassets <- vapply(drafts, function(d) length(d$assets), numeric(1))
+  cands   <- which(nassets == max(nassets))
+  keep_idx <- cands[which.min(ids[cands])]
+
+  for(i in seq_along(drafts)[-keep_idx]) {
+    req <- httr2::request(drafts[[i]]$url) |>
+      httr2::req_method('DELETE') |>
+      httr2::req_timeout(60) |>
+      httr2::req_error(is_error = function(x) {FALSE}) |>
+      httr2::req_headers(Accept = 'application/vnd.github+json') |>
+      httr2::req_auth_bearer_token(token)
+    req |> httr2::req_perform()
+  }
+  drafts[[keep_idx]]
 }
 
 get_release <- function(owner, repo, tag_name, token, release_description = "") {
@@ -230,8 +266,9 @@ get_release <- function(owner, repo, tag_name, token, release_description = "") 
   }
   else if(httr2::resp_status(resp) == 404) {
     #either truly no release for this tag yet, or it exists as a draft (which is
-    #invisible to the by-tag endpoint) -- update that one instead of making a duplicate
-    draft <- find_draft_release(owner, repo, tag_name, token)
+    #invisible to the by-tag endpoint) -- reuse (and dedupe) that one instead of
+    #making a duplicate
+    draft <- reconcile_drafts(owner, repo, tag_name, token)
     if(!is.null(draft))
       update_release(draft$url, token, release_description)
     else
