@@ -104,6 +104,7 @@ get_new_release_version <- function(pkg_path, owner, repo, token) {
   req <- httr2::request(url)
   req <- req |>
     httr2::req_method('GET') |>
+    httr2::req_timeout(60) |>
     httr2::req_error(is_error = function(x) {FALSE}) |>
     httr2::req_headers(Accept = 'application/vnd.github+json') |>
     httr2::req_auth_bearer_token(token)
@@ -159,6 +160,7 @@ create_release <- function(owner, repo, tag_name, token, release_description="")
   req <- httr2::request(url)
   req <- req |>
     httr2::req_method('POST') |>
+    httr2::req_timeout(60) |>
     httr2::req_error(is_error = function(x) {FALSE}) |>
     httr2::req_headers(Accept = 'application/vnd.github+json') |>
     httr2::req_auth_bearer_token(token) |>
@@ -177,6 +179,7 @@ update_release <- function(url, token, release_description) {
   req <- httr2::request(url)
   req <- req |>
     httr2::req_method('PATCH') |>
+    httr2::req_timeout(60) |>
     httr2::req_error(is_error = function(x) {FALSE}) |>
     httr2::req_headers(Accept = 'application/vnd.github+json') |>
     httr2::req_auth_bearer_token(token) |>
@@ -193,6 +196,7 @@ find_draft_release <- function(owner, repo, tag_name, token) {
   req <- httr2::request(url)
   req <- req |>
     httr2::req_method('GET') |>
+    httr2::req_timeout(60) |>
     httr2::req_error(is_error = function(x) {FALSE}) |>
     httr2::req_headers(Accept = 'application/vnd.github+json') |>
     httr2::req_auth_bearer_token(token)
@@ -214,6 +218,7 @@ get_release <- function(owner, repo, tag_name, token, release_description = "") 
   req <- httr2::request(url)
   req <- req |>
     httr2::req_method('GET') |>
+    httr2::req_timeout(60) |>
     httr2::req_error(is_error = function(x) {FALSE}) |>
     httr2::req_headers(Accept = 'application/vnd.github+json') |>
     httr2::req_auth_bearer_token(token)
@@ -254,6 +259,7 @@ upload_asset <- function(owner, repo, tag_name, asset_path, asset_name = "", tok
       req <- httr2::request(url)
       req <- req |>
         httr2::req_method('DELETE') |>
+        httr2::req_timeout(60) |>
         httr2::req_error(is_error = function(x) {FALSE}) |>
         httr2::req_headers(Accept = 'application/vnd.github+json') |>
         httr2::req_auth_bearer_token(token) |> httr2::req_perform()
@@ -264,6 +270,7 @@ upload_asset <- function(owner, repo, tag_name, asset_path, asset_name = "", tok
   req <- httr2::request(url)
   req <- req |>
     httr2::req_method('POST') |>
+    httr2::req_timeout(1800) |>
     httr2::req_error(is_error = function(x) {FALSE}) |>
     httr2::req_headers(Accept = 'application/vnd.github+json') |>
     httr2::req_auth_bearer_token(token) |>
